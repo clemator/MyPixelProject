@@ -12,7 +12,7 @@ public class Wall extends Building {
 
 	@Override
 	public String getName() {
-		return this._name + " " + this._id;
+		return this._name;
 	}
 
 	@Override

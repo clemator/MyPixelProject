@@ -1,5 +1,6 @@
 package main;
 import map.Cell;
+import map.Cell.State;
 import map.Map;
 import game.MyFont;
 import game.Player;
@@ -73,10 +74,12 @@ public class MainDisplay {
 			for (int i = 0; i < this._map._width; i++) {
 				for (int j = 0; j < this._map._height; j++) {
 					glBegin(GL_QUADS);
-					if (this._map.getCell(i, j).getState() == Cell.State.BLOCKED)
+					if (this._map.getCell(i, j).getBuilding() != null && this._map.getCell(i, j).getBuilding().getName().equals("Wall"))
+						glColor3f(0.3f, 0.3f, 0.3f);
+					else if (this._map.getCell(i, j).getBuilding() != null && this._map.getCell(i, j).getBuilding().getName().equals("Mining station"))
 						glColor3f(0.6f, 0.6f, 0.6f);
 					else if (this._map.getCell(i, j).getState() == Cell.State.DIRTY)
-						glColor3f(0.9f, 0.9f, 0.9f);
+						glColor3f(0.7f, 0.3f, 0.0f);
 					else if (this._map.getCell(i, j).getType() == Cell.Type.WATER)
 						glColor3f(0.1f, 0.1f, 1.0f);
 					else if (this._map.getCell(i, j).getType() == Cell.Type.DIRT)
@@ -155,45 +158,58 @@ public class MainDisplay {
 	        				+ this._map.getCell(this._player.getPlayerPositionX(), this._player.getPlayerPositionY()).getResource()
 	        				+ " (" + this._map.getCell(this._player.getPlayerPositionX(), this._player.getPlayerPositionY()).getResourceAmount() + ")");
 	        		switch (this._map.getCell(this._player.getPlayerPositionX(), this._player.getPlayerPositionY()).getResource()) {
-	        		case NOTHING: break;
+	        		case NOTHING: this._map.getCell(this._player.getPlayerPositionX(), this._player.getPlayerPositionY()).digResource();
+	        			break;
 	        		case GOLD: this._player.addGold(this._map.getCell(this._player.getPlayerPositionX(), this._player.getPlayerPositionY()).getResourceAmount());
-	        			this._map.getCell(this._player.getPlayerPositionX(), this._player.getPlayerPositionY()).resetResource();
+	        			this._map.getCell(this._player.getPlayerPositionX(), this._player.getPlayerPositionY()).digResource();
 	        			break;
 	        		case FUEL: this._player.addFuel(this._map.getCell(this._player.getPlayerPositionX(), this._player.getPlayerPositionY()).getResourceAmount());
-	        			this._map.getCell(this._player.getPlayerPositionX(), this._player.getPlayerPositionY()).resetResource();
+	        			this._map.getCell(this._player.getPlayerPositionX(), this._player.getPlayerPositionY()).digResource();
 	        			break;
 	        		case MINERAL: this._player.addMineral(this._map.getCell(this._player.getPlayerPositionX(), this._player.getPlayerPositionY()).getResourceAmount());
-	        			this._map.getCell(this._player.getPlayerPositionX(), this._player.getPlayerPositionY()).resetResource();
+	        			this._map.getCell(this._player.getPlayerPositionX(), this._player.getPlayerPositionY()).digResource();
         				break;
 	        		}
 	        		System.out.println(this._player.resourceToString());
+	        	}
+	        	// CLEANING
+	        	else if (Keyboard.getEventKey() == Keyboard.KEY_C) {
+	        		if (this._map.getCell(this._player.getPlayerPositionX(), this._player.getPlayerPositionY()).clean()) {
+	        			System.out.println("Cleaning complete.");
+	        		}
+	        		else
+	        			System.out.println("Nothing to clean.");
 	        	}
 	        	// BUILDING
 	        	// WALL
 	        	else if (Keyboard.getEventKey() == Keyboard.KEY_W) {
         			Building b = new Wall(this._wallId);
-	        		if (this._player.addMineral(-b.getCost())) {
+	        		if (this._map.getCell(this._player.getPlayerPositionX(), this._player.getPlayerPositionY()).getState() != Cell.State.DIRTY && this._player.addMineral(-b.getCost())) {
 	        			this._map.getCell(this._player.getPlayerPositionX(), this._player.getPlayerPositionY()).setState(Cell.State.BLOCKED);
 	        			this._map.getCell(this._player.getPlayerPositionX(), this._player.getPlayerPositionY()).setBuilding(b);
 	        			System.out.println("Wall succesfully builded!");
 	        			System.out.println(this._player.resourceToString());
 	        			this._wallId++;
 	        		}
+	        		else if (this._map.getCell(this._player.getPlayerPositionX(), this._player.getPlayerPositionY()).getState() == Cell.State.DIRTY)
+	        			System.out.println("Cannot build : ground is dirty. Clean up first.");
 	        		else
-	        			System.out.println("Cannot build a wall : not enough mineral. " + (10 - this._player.getMineralAmount()) + " missing.");
+	        			System.out.println("Cannot build a wall : not enough mineral. " + (b.getCost() - this._player.getMineralAmount()) + " missing.");
 	        	}
 	        	// MINING STATION
 	        	else if (Keyboard.getEventKey() == Keyboard.KEY_M) {
         			Building b = new MiningStation(this._miningStationId);
-	        		if (this._player.addMineral(-b.getCost())) {
+	        		if (this._map.getCell(this._player.getPlayerPositionX(), this._player.getPlayerPositionY()).getState() != Cell.State.DIRTY && this._player.addMineral(-b.getCost())) {
 	        			this._map.getCell(this._player.getPlayerPositionX(), this._player.getPlayerPositionY()).setState(Cell.State.BLOCKED);
 	        			this._map.getCell(this._player.getPlayerPositionX(), this._player.getPlayerPositionY()).setBuilding(b);
 	        			System.out.println("Mining station succesfully builded!");
 	        			System.out.println(this._player.resourceToString());
 	        			this._miningStationId++;
 	        		}
+	        		else if (this._map.getCell(this._player.getPlayerPositionX(), this._player.getPlayerPositionY()).getState() == Cell.State.DIRTY)
+	        			System.out.println("Cannot build : ground is dirty. Clean up first.");
 	        		else
-	        			System.out.println("Cannot build a wall : not enough mineral. " + (10 - this._player.getMineralAmount()) + " missing.");
+	        			System.out.println("Cannot build a mining station : not enough mineral. " + (b.getCost() - this._player.getMineralAmount()) + " missing.");
 	        	}
 	        	// RESETING GAME
 	        	else if (Keyboard.getEventKey() == Keyboard.KEY_R) {

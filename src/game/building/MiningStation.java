@@ -12,7 +12,7 @@ public class MiningStation extends Building {
 	
 	@Override
 	public String getName() {
-		return this._name + " " + this._id;
+		return this._name;
 	}
 
 	@Override

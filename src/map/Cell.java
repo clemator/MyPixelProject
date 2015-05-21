@@ -40,6 +40,7 @@ public class Cell {
 		this._type = type;
 		this._state = state;
 		this._isScanned = false;
+		this._building = null;
 		setResource();
 	}
 	
@@ -62,6 +63,11 @@ public class Cell {
 	public void resetResource() {
 		setResource(Cell.Resource.NOTHING);
 		this._resourceAmount = 0;
+	}
+	
+	public void digResource() {
+		resetResource();
+		setState(State.DIRTY);
 	}
 	
 	public Resource getResource() {
@@ -151,5 +157,13 @@ public class Cell {
 	
 	public void setBuilding(Building b) {
 		this._building = b;
+	}
+	
+	public boolean clean() {
+		if (this._state == State.DIRTY) {
+			setState(State.EMPTY);
+			return true;
+		}
+		return false;
 	}
 }
